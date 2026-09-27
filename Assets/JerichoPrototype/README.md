@@ -52,4 +52,13 @@ an existing prototype scene. PrototypeVerification.Run executes automated
 Play Mode checks in Unity batch mode. These do not replace visual review of
 retargeting, camera feel, formation turns, or physically walking the full route.
 
-No Ark, priests, combat, wall collapse, mobile controls or other missions.
+## Priest horn gesture tests
+
+The saved seven-priest formation keeps each horn's authored parent, transform, scale,
+materials, and textures. In Play Mode, press `H` to trigger every priest's horn gesture,
+or `1` through `7` to trigger that numbered priest (the numeric keypad works too).
+The controls are a temporary runtime-only test harness; they do not add or alter any
+saved scene/prefab attachment. Existing Inspector and `Tools/Jericho Prototype/Horn Tests`
+commands remain available for manual and deterministic checks.
+
+No Ark, combat, wall collapse, mobile controls or other missions.
