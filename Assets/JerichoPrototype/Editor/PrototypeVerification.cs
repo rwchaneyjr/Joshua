@@ -32,7 +32,7 @@ namespace JerichoPrototype.Editor
                 var mission = UnityEngine.Object.FindObjectOfType<JerichoMission>();
                 if (stage == 0)
                 {
-                    Require(player && manager && mission && manager.followers.Length == 10, "Scene wiring");
+                    Require(player && manager && mission && manager.followers.Length == 17, "Scene wiring");
                     Require(player.animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"), "Idle state");
                     foreach (var npc in manager.followers) Require(npc.animator.avatar.isValid && npc.animator.avatar.isHuman && !npc.animator.applyRootMotion, "NPC Avatar/root motion");
                     player.readKeyboard = false; player.MoveInput = Vector2.up; origin = player.transform.position;
@@ -48,21 +48,21 @@ namespace JerichoPrototype.Editor
                 {
                     Require(Vector3.Distance(origin, player.transform.position) > 3.5f, "Run movement");
                     Require(player.animator.GetCurrentAnimatorStateInfo(0).IsName("Run"), "Run animation");
-                    var a = manager.followers[0].animator; var b = manager.followers[3].animator;
-                    Require(a.GetCurrentAnimatorStateInfo(0).IsName("Walk") && b.GetCurrentAnimatorStateInfo(0).IsName("Walk"), "March state");
+                    var a = manager.followers[0].animator; var b = manager.followers[10].animator;
+                    Require(a.GetCurrentAnimatorStateInfo(0).IsName("WALK") && b.GetCurrentAnimatorStateInfo(0).IsName("Walk"), "March state");
                     Require(Mathf.Abs(Mathf.Repeat(b.GetFloat("MarchPhase") - a.GetFloat("MarchPhase"), 1) - .5f) < .01f, "Alternating phase");
-                    manager.followers[3].gameObject.SetActive(false);
+                    manager.followers[10].gameObject.SetActive(false);
                     player.MoveInput = Vector2.zero; Advance();
                 }
                 else if (stage == 3 && Elapsed > .5f)
                 {
                     Require(player.animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"), "Stop animation");
                     Require(Mathf.Abs(player.transform.position.y) < .15f, "Ground contact");
-                    manager.followers[3].gameObject.SetActive(true); Advance();
+                    manager.followers[10].gameObject.SetActive(true); Advance();
                 }
                 else if (stage == 4 && Elapsed > .5f)
                 {
-                    float difference = manager.followers[3].animator.GetFloat("MarchPhase") - manager.followers[0].animator.GetFloat("MarchPhase");
+                    float difference = manager.followers[10].animator.GetFloat("MarchPhase") - manager.followers[0].animator.GetFloat("MarchPhase");
                     Require(Mathf.Abs(Mathf.Repeat(difference, 1) - .5f) < .01f, "Late join phase");
                     Teleport(player, mission.checkpoints[2].position); Advance();
                 }
@@ -78,7 +78,7 @@ namespace JerichoPrototype.Editor
                     if (expected == 6)
                     {
                         Require(mission.Complete, "Mission completion");
-                        Debug.Log("JERICHO PLAYMODE PASS: Idle/Walk/Run, movement/stop/ground, 10 valid soldiers, Walk marching, A/B phase, late rejoin, rejected out-of-order checkpoint, all six checkpoints and completion.");
+                        Debug.Log("JERICHO PLAYMODE PASS: Idle/Walk/Run, movement/stop/ground, 7 horn priests, 10 valid soldiers, synchronized marching, A/B phase, late rejoin, rejected out-of-order checkpoint, all six checkpoints and completion.");
                         Finish(0); return;
                     }
                     Teleport(player, mission.checkpoints[expected].position); Advance();
