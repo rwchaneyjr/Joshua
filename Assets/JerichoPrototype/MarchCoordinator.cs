@@ -16,7 +16,8 @@ namespace JerichoPrototype
             foreach (var member in members)
             {
                 if (!member || !member.isActiveAndEnabled || !member.animator || !member.animator.isActiveAndEnabled) continue;
-                member.animator.SetBool("Marching", marching && member.Moving);
+                // Ceremonial actions own the pose until they explicitly release this follower.
+                member.animator.SetBool("Marching", marching && member.Moving && !member.MovementSuppressed);
                 member.animator.SetFloat("MarchPhase", Mathf.Repeat((float)(clock % 1.0) + member.Slot.phaseGroup * .5f, 1f));
             }
         }

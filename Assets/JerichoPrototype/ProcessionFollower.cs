@@ -9,6 +9,8 @@ namespace JerichoPrototype
         public MarchCoordinator march;
         public float maxSpeed = 6.5f;
         public bool Moving { get; private set; }
+        /// <summary>Set by a ceremonial action so formation and marching cannot override it.</summary>
+        public bool MovementSuppressed { get; private set; }
         public FormationSlot Slot { get; private set; }
         CharacterController motor;
         float gravity;
@@ -18,6 +20,13 @@ namespace JerichoPrototype
         void OnDisable() { if (march) march.Remove(this); }
         void Update()
         {
+            if (MovementSuppressed)
+            {
+                Moving = false;
+                gravity = motor.isGrounded && gravity < 0 ? -2 : gravity - 20 * Time.deltaTime;
+                motor.Move(Vector3.up * gravity * Time.deltaTime);
+                return;
+            }
             if (!procession || !procession.leader) return;
             Vector3 delta = procession.PositionFor(Slot) - transform.position; delta.y = 0;
             Vector3 velocity = delta.magnitude > .25f ? delta.normalized * Mathf.Min(maxSpeed, delta.magnitude * 2) : Vector3.zero;
@@ -36,6 +45,12 @@ namespace JerichoPrototype
             Vector3 moved = transform.position - before; moved.y = 0;
             Moving = moved.magnitude > .03f * Time.deltaTime;
             if (Moving) transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(moved), 240 * Time.deltaTime);
+        }
+
+        public void SetMovementSuppressed(bool suppressed)
+        {
+            MovementSuppressed = suppressed;
+            if (suppressed) Moving = false;
         }
     }
 }
