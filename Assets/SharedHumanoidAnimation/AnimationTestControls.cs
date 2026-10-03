@@ -106,7 +106,7 @@ namespace SharedHumanoidAnimation
         {
             // Exactly one panel is rendered: the selected character owns the selector and actions.
             if (!testMode || !showOnScreenControls || targetAnimator == null || selectedControl != this) return;
-            GUILayout.BeginArea(new Rect(16f, 16f, 310f, 300f), GUI.skin.box);
+            using (JerichoPrototype.BlackGameText.Scope()) { GUILayout.BeginArea(new Rect(16f, 16f, 310f, 300f), GUI.skin.box);
             GUILayout.Label("Selected: " + characterLabel);
             GUILayout.Label("Choose character (only selected receives 1-5):");
             GUILayout.BeginHorizontal();
@@ -122,7 +122,7 @@ namespace SharedHumanoidAnimation
             DrawButton("3  Run", RunState);
             DrawButton("4  Kick", KickState);
             DrawCarryButton();
-            GUILayout.EndArea();
+            GUILayout.EndArea(); }
         }
 
         private void DrawSelector(string label)

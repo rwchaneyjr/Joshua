@@ -28,15 +28,15 @@ namespace JerichoPrototype
 
         [Header("Humanoid Pose Offsets")]
         [Tooltip("Local Euler rotation applied to the horn-holding upper arm at full raise.")]
-        [SerializeField] Vector3 upperArmRaiseEuler = new Vector3(-65f, 18f, -42f);
+        [SerializeField] Vector3 upperArmRaiseEuler = new Vector3(-80f, 18f, -42f);
         [Tooltip("Local Euler rotation applied to the horn-holding lower arm at full raise.")]
-        [SerializeField] Vector3 lowerArmRaiseEuler = new Vector3(-48f, 0f, 18f);
+        [SerializeField] Vector3 lowerArmRaiseEuler = new Vector3(20f, 0f, 75f);
         [Tooltip("Local Euler rotation applied to the horn-holding hand at full raise.")]
         [SerializeField] Vector3 handRaiseEuler = new Vector3(16f, 0f, 0f);
-        [Tooltip("Optional world-space trim applied to the saved horn position only during the raised pose.")]
-        [SerializeField] Vector3 hornMouthOffset = Vector3.zero;
+        [Tooltip("World-space trim applied only while raised. The saved horn local position remains unchanged and is restored after lowering.")]
+        [SerializeField] Vector3 hornMouthOffset = new Vector3(6.07f, -.82f, -6.73f);
         [Tooltip("Optional local Euler trim applied to the saved horn rotation only during the raised pose.")]
-        [SerializeField] Vector3 hornMouthEulerOffset = Vector3.zero;
+        [SerializeField] Vector3 hornMouthEulerOffset = new Vector3(0f, 0f, 90f);
 
         Phase phase;
         float phaseTime;
@@ -49,6 +49,37 @@ namespace JerichoPrototype
         Vector3 hornRestLocalPosition;
         Quaternion hornRestLocalRotation;
         bool initialized;
+
+        [System.Serializable]
+        public struct AuthoredTransform
+        {
+            public string path;
+            public Vector3 position, scale;
+            public Quaternion rotation;
+        }
+        [SerializeField] AuthoredTransform[] authoredHoldPose;
+        Transform[] authoredBones;
+        AuthoredTransform[] authoredRest;
+
+        public void SetAuthoredHoldPose(AuthoredTransform[] pose)
+        {
+            authoredHoldPose = pose;
+            authoredBones = null;
+            authoredRest = null;
+        }
+
+        void CaptureAuthoredRest()
+        {
+            if (authoredHoldPose == null || authoredHoldPose.Length == 0) return;
+            authoredBones = new Transform[authoredHoldPose.Length];
+            authoredRest = new AuthoredTransform[authoredHoldPose.Length];
+            for (int i = 0; i < authoredHoldPose.Length; i++)
+            {
+                var bone = transform.Find(authoredHoldPose[i].path);
+                authoredBones[i] = bone;
+                if (bone) authoredRest[i] = new AuthoredTransform { position = bone.localPosition, rotation = bone.localRotation, scale = bone.localScale };
+            }
+        }
 
         public bool IsBlowing => phase != Phase.Idle;
         public float SequenceDuration => raiseDuration + holdDuration + lowerDuration;
@@ -80,6 +111,7 @@ namespace JerichoPrototype
         public void BlowHorn()
         {
             if (!CacheHumanoidReferences()) return;
+            if (phase == Phase.Idle) CaptureAuthoredRest();
             phase = Phase.Raising;
             phaseTime = 0f;
             if (follower) follower.SetMovementSuppressed(true);
@@ -169,19 +201,44 @@ namespace JerichoPrototype
 
         void ApplyRaisedPose(float weight)
         {
+            if (authoredBones != null)
+            {
+                for (int i = 0; i < authoredBones.Length; i++)
+                {
+                    var bone = authoredBones[i];
+                    if (!bone) continue;
+                    bone.localPosition = Vector3.Lerp(authoredRest[i].position, authoredHoldPose[i].position, weight);
+                    bone.localRotation = Quaternion.Slerp(authoredRest[i].rotation, authoredHoldPose[i].rotation, weight);
+                    bone.localScale = Vector3.Lerp(authoredRest[i].scale, authoredHoldPose[i].scale, weight);
+                }
+                return;
+            }
             upperArm.localRotation = upperArmRest * Quaternion.Euler(upperArmRaiseEuler * weight);
             lowerArm.localRotation = lowerArmRest * Quaternion.Euler(lowerArmRaiseEuler * weight);
             hand.localRotation = handRest * Quaternion.Euler(handRaiseEuler * weight);
             if (horn)
             {
                 // This never changes parenting, saved scale, material, or the persisted prefab transform.
-                horn.localPosition = hornRestLocalPosition + hornMouthOffset * weight;
+                horn.localPosition = hornRestLocalPosition;
+                horn.position += hornMouthOffset * weight;
                 horn.localRotation = hornRestLocalRotation * Quaternion.Euler(hornMouthEulerOffset * weight);
             }
         }
 
         void RestoreRestPose()
         {
+            if (authoredBones != null)
+            {
+                for (int i = 0; i < authoredBones.Length; i++)
+                {
+                    var bone = authoredBones[i];
+                    if (!bone) continue;
+                    bone.localPosition = authoredRest[i].position;
+                    bone.localRotation = authoredRest[i].rotation;
+                    bone.localScale = authoredRest[i].scale;
+                }
+                return;
+            }
             if (!initialized) return;
             if (upperArm) upperArm.localRotation = upperArmRest;
             if (lowerArm) lowerArm.localRotation = lowerArmRest;

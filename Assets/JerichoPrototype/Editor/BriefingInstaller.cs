@@ -1,3 +1,43 @@
 #if UNITY_EDITOR
-using UnityEditor; using UnityEditor.SceneManagement; using UnityEngine; namespace JerichoPrototype.Editor { public static class BriefingInstaller { [MenuItem("Tools/Jericho Prototype/Add Briefing NPC")] public static void Install(){var scene=EditorSceneManager.OpenScene(PrototypeBuilder.ScenePath);var player=Object.FindObjectOfType<JoshuaController>();if(!player)throw new System.Exception("Joshua missing");var npc=GameObject.Find("Briefing NPC")??GameObject.CreatePrimitive(PrimitiveType.Capsule);npc.name="Briefing NPC";npc.transform.position=player.transform.position+player.transform.right*3f;var dialogue=npc.GetComponent<BriefingDialogue>()??npc.AddComponent<BriefingDialogue>();dialogue.player=player.transform;dialogue.controller=player;dialogue.cameraController=Object.FindObjectOfType<ThirdPersonCamera>();EditorSceneManager.MarkSceneDirty(scene);EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();Debug.Log("Briefing NPC installed.");} } }
+using System;
+using System.IO;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+namespace JerichoPrototype.Editor
+{
+    public static class BriefingInstaller
+    {
+        [InitializeOnLoadMethod] static void CheckRequest()
+        {
+            EditorApplication.delayCall += () => {
+                if (!File.Exists(".utmp/opening-briefing")) return;
+                File.Delete(".utmp/opening-briefing");
+                try { Install(); }
+                catch (Exception ex) { File.WriteAllText("Logs/opening-briefing.txt", ex.ToString()); }
+            };
+        }
+        [MenuItem("Tools/Jericho Prototype/Install Opening Briefing")]
+        public static void Install()
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode) throw new Exception("Exit Play Mode first.");
+            var player = UnityEngine.Object.FindObjectOfType<JoshuaController>();
+            if (!player) throw new Exception("Open the Jericho scene first.");
+            var npc = GameObject.Find("Briefing NPC");
+            var root = GameObject.Find("Opening Briefing");
+            if (!root) { root = new GameObject("Opening Briefing"); Undo.RegisterCreatedObjectUndo(root, "Add opening briefing"); }
+            var dialogue = root.GetComponent<BriefingDialogue>() ?? root.AddComponent<BriefingDialogue>();
+            if (npc && npc.GetComponent<BriefingDialogue>()) EditorUtility.CopySerialized(npc.GetComponent<BriefingDialogue>(), dialogue);
+            dialogue.speakerName = "Mission Briefing";
+            dialogue.player = player.transform;
+            dialogue.controller = player;
+            dialogue.cameraController = UnityEngine.Object.FindObjectOfType<ThirdPersonCamera>();
+            if (npc) Undo.DestroyObjectImmediate(npc);
+            EditorUtility.SetDirty(dialogue);
+            EditorSceneManager.MarkSceneDirty(player.gameObject.scene);
+            EditorSceneManager.SaveScene(player.gameObject.scene);
+            File.WriteAllText("Logs/opening-briefing.txt", "PASS: opening briefing saved with existing dialogue pages; NPC removed. Instruction visibility tied to first checkpoint.");
+        }
+    }
+}
 #endif

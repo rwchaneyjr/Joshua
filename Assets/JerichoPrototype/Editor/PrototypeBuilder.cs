@@ -83,7 +83,7 @@ namespace JerichoPrototype.Editor
             for (int i = 0; i < points.Length; i++)
             {
                 var checkpoint = new GameObject("Checkpoint " + (i + 1)); checkpoint.transform.position = points[i]; mission.checkpoints[i] = checkpoint.transform;
-                var label = new GameObject("Route sign " + (i + 1)).AddComponent<TextMesh>(); label.text = (i + 1).ToString(); label.fontSize = 64; label.characterSize = .3f; label.anchor = TextAnchor.MiddleCenter;
+                var label = new GameObject("Route sign " + (i + 1)).AddComponent<TextMesh>(); label.text = (i + 1).ToString(); label.color = Color.black; label.fontSize = 64; label.characterSize = .3f; label.anchor = TextAnchor.MiddleCenter;
                 label.transform.position = points[i] + Vector3.up * .03f; label.transform.rotation = Quaternion.Euler(90,0,0);
             }
             EditorSceneManager.SaveScene(scene, ScenePath); AssetDatabase.SaveAssets();
@@ -115,3 +115,4 @@ namespace JerichoPrototype.Editor
         }
     }
 }
+
