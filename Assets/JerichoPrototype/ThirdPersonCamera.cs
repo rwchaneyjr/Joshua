@@ -31,6 +31,7 @@ namespace JerichoPrototype
         }
         public void EndHornView() { hornView=false; wasLookingBack=true; }
         public Vector3 MovementForward => Quaternion.Euler(0, yaw, 0) * Vector3.forward;
+        public void RestoreHeading(float heading) { yaw=heading;looking=false;lookBackUntil=0;wasLookingBack=true; }
         void LateUpdate()
         {
             if (!target) return;

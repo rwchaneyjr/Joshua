@@ -43,6 +43,8 @@ namespace JerichoPrototype
 
         void Update()
         {
+            var mission=FindObjectOfType<JerichoMission>();
+            if(mission && mission.SaveChoiceOpen)return;
             if (!open || PuzzleOpen) return;
             if (Input.GetKeyDown(KeyCode.Escape)) Close();
             else if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space)) Next();
@@ -66,6 +68,7 @@ namespace JerichoPrototype
             if (!open || !PuzzleOpen || !Puzzle.Solved) return;
             RestoreControls();
         }
+        public void ResumeSavedMarch() { RestoreControls(); }
 
         void RestoreControls()
         {
@@ -82,6 +85,8 @@ namespace JerichoPrototype
         void OnGUI()
         {
             if (!open) return;
+            var mission=FindObjectOfType<JerichoMission>();
+            if(mission && mission.SaveChoiceOpen){mission.DrawSaveChoice();return;}
             if (PuzzleOpen) { DrawPuzzle(); return; }
             using (BlackGameText.Scope())
             {
