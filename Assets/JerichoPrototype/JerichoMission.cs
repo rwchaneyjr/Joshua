@@ -128,7 +128,9 @@ namespace JerichoPrototype
             {
                 var copy = Instantiate(source.gameObject);
                 copy.name = "Finale Attack Soldier " + finaleArmy.Count;
-                copy.transform.position = player.position - towardCity * (3.5f + row * 2.2f) + line * (column * 1.35f);
+                // Keep the attack ranks on the flank, clear of the inward-
+                // falling masonry, while retaining them in the camera frame.
+                copy.transform.position = player.position - towardCity * (8f + row * 2.2f) + line * (18f + column * 1.35f);
                 copy.transform.rotation = Quaternion.LookRotation(towardCity, Vector3.up);
                 var follower = copy.GetComponent<ProcessionFollower>();
                 if (follower) follower.enabled = false;

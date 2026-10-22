@@ -57,23 +57,30 @@ namespace JerichoPrototype
             // remains static behind the blocks, while the visible stones collide
             // and settle into believable rubble.
             Vector3 center = transform.position;
-            for (int i = 0; i < pieces.Length; i++)
+            var released = new bool[pieces.Length];
+            float elapsed = 0f;
+            while (elapsed < 7.5f)
             {
-                yield return new WaitForSeconds((i % 8) * .08f);
-                var piece = pieces[i];
-                foreach (var c in piece.GetComponentsInChildren<Collider>()) c.enabled = true;
-                var body = piece.gameObject.GetComponent<Rigidbody>();
-                if (!body) body = piece.gameObject.AddComponent<Rigidbody>();
-                body.mass = 1.5f;
-                body.drag = .15f;
-                body.angularDrag = .35f;
-                Vector3 outward = (piece.position - center);
-                outward.y = .15f;
-                outward = outward.sqrMagnitude > .01f ? outward.normalized : Vector3.forward;
-                body.AddForce((outward + Vector3.up * .25f) * collapseForce, ForceMode.Impulse);
-                body.AddTorque(Random.insideUnitSphere * collapseTorque, ForceMode.Impulse);
+                for (int i = 0; i < pieces.Length; i++)
+                {
+                    if (released[i] || elapsed < (i % 8) * .08f) continue;
+                    released[i] = true;
+                    var piece = pieces[i];
+                    foreach (var c in piece.GetComponentsInChildren<Collider>()) c.enabled = true;
+                    var body = piece.gameObject.GetComponent<Rigidbody>();
+                    if (!body) body = piece.gameObject.AddComponent<Rigidbody>();
+                    body.mass = 1.5f;
+                    body.drag = .15f;
+                    body.angularDrag = .35f;
+                    Vector3 outward = (piece.position - center);
+                    outward.y = .15f;
+                    outward = outward.sqrMagnitude > .01f ? outward.normalized : Vector3.forward;
+                    body.AddForce((outward + Vector3.up * .25f) * collapseForce, ForceMode.Impulse);
+                    body.AddTorque(Random.insideUnitSphere * collapseTorque, ForceMode.Impulse);
+                }
+                elapsed += Time.deltaTime;
+                yield return null;
             }
-            yield return new WaitForSeconds(7f);
             Finished=true;
         }
     }
