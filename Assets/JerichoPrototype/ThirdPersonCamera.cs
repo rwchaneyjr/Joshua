@@ -16,6 +16,20 @@ namespace JerichoPrototype
         bool hornView;
         Vector3 hornFocus, hornPosition;
         public bool ShowingHornView => hornView;
+        public void ShowCollapseView(Vector3 processionFocus, Vector3 cityCenter)
+        {
+            hornView = true;
+            lookBackUntil = 0;
+            Vector3 fromCity = processionFocus - cityCenter;
+            fromCity.y = 0;
+            if (fromCity.sqrMagnitude < .01f) fromCity = -target.forward;
+            fromCity.Normalize();
+
+            // Keep Joshua and the procession in the foreground while the city
+            // remains visible in the direction they are facing.
+            hornFocus = Vector3.Lerp(processionFocus, cityCenter, .42f) + Vector3.up * 2.5f;
+            hornPosition = processionFocus + fromCity * 13f + Vector3.up * 5.5f;
+        }
         public void ShowHornView(Bounds priests, Vector3 cityCenter)
         {
             hornView = true;

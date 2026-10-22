@@ -37,6 +37,16 @@ namespace JerichoPrototype.Editor
             root = new GameObject("Grand Jericho").transform; SceneManager.MoveGameObjectToScene(root.gameObject, scene);
             pieces.Clear();
             stone = Mat("City sandstone", new Color(.65f,.45f,.27f)); pale = Mat("City limestone",new Color(.87f,.71f,.47f));
+            var wallAlbedo = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/JerichoPrototype/Textures/walls.png");
+            if (wallAlbedo)
+            {
+                stone.mainTexture = wallAlbedo;
+                pale.mainTexture = wallAlbedo;
+                stone.mainTextureScale = new Vector2(1.6f, 1.6f);
+                pale.mainTextureScale = new Vector2(1.6f, 1.6f);
+                EditorUtility.SetDirty(stone);
+                EditorUtility.SetDirty(pale);
+            }
             dark = Mat("City shadow stone",new Color(.40f,.28f,.18f)); roof = Mat("City terracotta",new Color(.57f,.25f,.13f));
             wood = Mat("City cedar",new Color(.22f,.115f,.055f)); blue = Mat("City indigo",new Color(.10f,.27f,.36f));
             foreach(var t in all.Where(t => new[]{"North wall","South wall","East wall","West wall"}.Contains(t.name))) t.gameObject.SetActive(false);
@@ -46,14 +56,23 @@ namespace JerichoPrototype.Editor
             {
                 if(side==0 && (col==7 || col==8)) continue;
                 float along=-30+col*4;
+                var q=Quaternion.Euler(0,side*90,0);
                 for(int row=0;row<5;row++)
                 {
                     Vector3 p = new Vector3(along,1+row*2,-32);
-                    var q=Quaternion.Euler(0,side*90,0);
-                    var b=Box("Wall masonry",q*p,new Vector3(3.94f,1.94f,2.6f),(row+col)%4==0?pale:stone,true);
+                    // Leave a narrow recessed mortar joint so blocks read as
+                    // separate masonry instead of blending into one surface.
+                    var b=Box("Wall masonry",q*p,new Vector3(3.86f,1.86f,2.6f),(row+col)%4==0?pale:stone,true);
                     b.rotation=q;
                 }
                 var top=Box("Battlement",Quaternion.Euler(0,side*90,0)*new Vector3(along,10.65f,-32),new Vector3(2,1.3f,2.7f),pale,true);top.rotation=Quaternion.Euler(0,side*90,0);
+            }
+            for(int side=0;side<4;side++)
+            {
+                var q=Quaternion.Euler(0,side*90,0);
+                // A recessed core keeps the wall visually solid between the
+                // separate collapse blocks without moving with the rubble.
+                Box("Wall inner core",q*new Vector3(0,5.5f,-32),new Vector3(64,11,.7f),dark);
             }
             foreach(float x in new[]{-32f,32f}) foreach(float z in new[]{-32f,32f}) Tower(x,z,15);
             Tower(-7,-32,17);Tower(7,-32,17);

@@ -6,6 +6,8 @@ namespace JerichoPrototype
     public sealed class CityWallCollapse : MonoBehaviour
     {
         public Transform[] pieces;
+        public float collapseForce = 5.5f;
+        public float collapseTorque = 3.5f;
         public bool Collapsed { get; private set; }
         public bool Finished { get; private set; }
         public void RestoreCollapsed()
@@ -16,7 +18,8 @@ namespace JerichoPrototype
                 Vector3 inward=-new Vector3(positions[i].x,0,positions[i].z).normalized;
                 var target=positions[i]+inward*(1.5f+i%4);target.y=.45f+(i%3)*.3f;
                 pieces[i].localPosition=target;
-                pieces[i].localRotation=Quaternion.Euler(70+i%35,i*37%360,i%2==0?15:-15);
+                    pieces[i].localRotation=Quaternion.Euler(48+i%22,i*20%360,i%2==0?8:-8);
+                foreach(var body in pieces[i].GetComponentsInChildren<Rigidbody>()) Destroy(body.gameObject);
                 foreach(var c in pieces[i].GetComponentsInChildren<Collider>())c.enabled=false;
             }
         }
@@ -44,29 +47,33 @@ namespace JerichoPrototype
             for (int i = 0; i < pieces.Length; i++)
             {
                 pieces[i].localPosition = positions[i]; pieces[i].localRotation = rotations[i];
+                foreach(var body in pieces[i].GetComponentsInChildren<Rigidbody>()) Destroy(body.gameObject);
                 foreach (var c in pieces[i].GetComponentsInChildren<Collider>()) c.enabled = true;
             }
         }
         IEnumerator Fall()
         {
-            // Controlled rubble stays inside the marching route; no hundreds-body physics spike.
-            foreach (var p in pieces) foreach (var c in p.GetComponentsInChildren<Collider>()) c.enabled = false;
-            float elapsed = 0;
-            while (elapsed < 5)
+            // Detach each masonry block with a staggered impulse. The wall core
+            // remains static behind the blocks, while the visible stones collide
+            // and settle into believable rubble.
+            Vector3 center = transform.position;
+            for (int i = 0; i < pieces.Length; i++)
             {
-                elapsed += Time.deltaTime;
-                for (int i = 0; i < pieces.Length; i++)
-                {
-                    float t = Mathf.Clamp01((elapsed - (i % 19) * .07f) / 2.8f);
-                    float ease = t * t * (3 - 2 * t);
-                    Vector3 inward = -new Vector3(positions[i].x, 0, positions[i].z).normalized;
-                    Vector3 target = positions[i] + inward * (1.5f + i % 4);
-                    target.y = .45f + (i % 3) * .3f;
-                    pieces[i].localPosition = Vector3.Lerp(positions[i], target, ease);
-                    pieces[i].localRotation = Quaternion.Slerp(rotations[i], Quaternion.Euler(70 + i % 35, i * 37 % 360, i % 2 == 0 ? 15 : -15), ease);
-                }
-                yield return null;
+                yield return new WaitForSeconds((i % 8) * .08f);
+                var piece = pieces[i];
+                foreach (var c in piece.GetComponentsInChildren<Collider>()) c.enabled = true;
+                var body = piece.gameObject.GetComponent<Rigidbody>();
+                if (!body) body = piece.gameObject.AddComponent<Rigidbody>();
+                body.mass = 1.5f;
+                body.drag = .15f;
+                body.angularDrag = .35f;
+                Vector3 outward = (piece.position - center);
+                outward.y = .15f;
+                outward = outward.sqrMagnitude > .01f ? outward.normalized : Vector3.forward;
+                body.AddForce((outward + Vector3.up * .25f) * collapseForce, ForceMode.Impulse);
+                body.AddTorque(Random.insideUnitSphere * collapseTorque, ForceMode.Impulse);
             }
+            yield return new WaitForSeconds(7f);
             Finished=true;
         }
     }

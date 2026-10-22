@@ -28,6 +28,7 @@ namespace JerichoPrototype
         JoshuaController finaleController;
         bool finaleControllerEnabled;
         bool testPanel;
+        readonly List<GameObject> finaleArmy = new List<GameObject>();
         public bool Testing { get; private set; }
         public void EnableTesting()
         {
@@ -92,13 +93,13 @@ namespace JerichoPrototype
             transitioning=true;
             if(city && !city.Finished)
             {
+                BuildFinaleArmy();
                 finaleController=player.GetComponent<JoshuaController>();
                 if(finaleController){finaleControllerEnabled=finaleController.enabled;finaleController.enabled=false;}
                 finaleCamera=FindObjectsOfType<ThirdPersonCamera>().FirstOrDefault(c=>c.target==player && c.isActiveAndEnabled);
                 if(finaleCamera)
                 {
-                    var bounds=new Bounds(cityCenter+Vector3.up*5,new Vector3(70,16,70));
-                    finaleCamera.ShowHornView(bounds,cityCenter);
+                    finaleCamera.ShowCollapseView(player.position,cityCenter);
                 }
                 yield return new WaitForSeconds(1.2f);
                 city.Collapse();while(city && !city.Finished)yield return null;
@@ -106,6 +107,35 @@ namespace JerichoPrototype
                 RestoreFinaleControls();
             }
             transitioning=false;SaveProgress();
+        }
+
+        void BuildFinaleArmy()
+        {
+            if (finaleArmy.Count > 0) return;
+            var source = FindObjectsOfType<ProcessionFollower>()
+                .FirstOrDefault(f => f && f.gameObject.scene == gameObject.scene && f.name.StartsWith("Soldier "));
+            if (!source) return;
+
+            Vector3 towardCity = cityCenter - player.position;
+            towardCity.y = 0;
+            if (towardCity.sqrMagnitude < .01f) towardCity = player.forward;
+            towardCity.Normalize();
+            Vector3 line = Vector3.Cross(Vector3.up, towardCity).normalized;
+
+            // Extra ranks form up behind Joshua, facing the walls.
+            for (int row = 0; row < 3; row++)
+            for (int column = -4; column <= 4; column++)
+            {
+                var copy = Instantiate(source.gameObject);
+                copy.name = "Finale Attack Soldier " + finaleArmy.Count;
+                copy.transform.position = player.position - towardCity * (3.5f + row * 2.2f) + line * (column * 1.35f);
+                copy.transform.rotation = Quaternion.LookRotation(towardCity, Vector3.up);
+                var follower = copy.GetComponent<ProcessionFollower>();
+                if (follower) follower.enabled = false;
+                var controller = copy.GetComponent<JoshuaController>();
+                if (controller) controller.enabled = false;
+                finaleArmy.Add(copy);
+            }
         }
         void RestoreFinaleControls()
         {
