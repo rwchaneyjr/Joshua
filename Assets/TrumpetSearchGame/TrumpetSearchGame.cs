@@ -76,7 +76,7 @@ namespace JerichoPrototype
         {
             if (panel == null)
             {
-                paper = new Texture2D(1,1); paper.SetPixel(0,0,new Color(.96f,.89f,.70f)); paper.Apply();
+                paper = new Texture2D(1,1); paper.SetPixel(0,0,Color.white); paper.Apply();
                 panel = new GUIStyle(GUI.skin.box); panel.normal.background = paper;
                 label = new GUIStyle(GUI.skin.label) { wordWrap = true, fontSize = 18 };
                 title = new GUIStyle(label) { fontSize = 24, fontStyle = FontStyle.Bold };

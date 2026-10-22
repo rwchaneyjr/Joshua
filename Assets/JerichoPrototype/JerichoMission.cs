@@ -23,6 +23,40 @@ namespace JerichoPrototype
         Vector3 cityCenter;
         bool openingShown,transitioning;
         string saveStatus="";
+        CityWallCollapse city;
+        ThirdPersonCamera finaleCamera;
+        JoshuaController finaleController;
+        bool finaleControllerEnabled;
+        bool testPanel;
+        public bool Testing { get; private set; }
+        public void EnableTesting()
+        {
+            if(transitioning)return;
+            Testing=true;SaveEnabled=false;SaveChoiceOpen=false;pendingSave=null;openingShown=true;
+            if(briefing)briefing.ResumeSavedMarch();
+            saveStatus="TEST MODE — progress is not saved";
+        }
+        public void TestNextCheckpoint()
+        {
+            if(transitioning || route==null || Complete)return;
+            EnableTesting();
+            var actors=Actors();var positions=actors.Select(a=>a.position).ToArray();
+            Vector3 target=checkpoints[Mathf.Min(5,route.Reached)].position;target.y=player.position.y;
+            Vector3 delta=target-player.position;
+            var motors=actors.SelectMany(a=>a.GetComponentsInChildren<CharacterController>()).Distinct().ToArray();
+            var states=motors.Select(m=>m.enabled).ToArray();foreach(var m in motors)m.enabled=false;
+            for(int i=0;i<actors.Length;i++)actors[i].position=positions[i]+delta;
+            for(int i=0;i<motors.Length;i++)motors[i].enabled=states[i];Physics.SyncTransforms();
+        }
+        public void TestFinishDay(bool finalDay)
+        {
+            if(transitioning || route==null)return;
+            EnableTesting();
+            if(finalDay){Days.Restore(7,6);if(city && city.Collapsed)city.ResetWalls();}
+            else if(!Complete)Days.Restore(Days.Day,Days.Required-1);
+            else return;
+            ResetCircuit(5);TestNextCheckpoint();
+        }
         void Start()
         {
             briefing=FindObjectOfType<BriefingDialogue>();
@@ -30,11 +64,13 @@ namespace JerichoPrototype
             var bounds=new Bounds(checkpoints[0].position,Vector3.zero);foreach(var p in checkpoints)bounds.Encapsulate(p.position);cityCenter=bounds.center;
             hornMoments=GetComponent<HalfCircuitHorns>();if(!hornMoments)hornMoments=gameObject.AddComponent<HalfCircuitHorns>();
             camp=GetComponent<MarchCamp>();if(!camp)camp=gameObject.AddComponent<MarchCamp>();camp.Initialize(cityCenter);
+            city=FindObjectsOfType<CityWallCollapse>().FirstOrDefault(c=>c.gameObject.scene==gameObject.scene);
             ResetCircuit();pendingSave=MarchSave.Load();SaveChoiceOpen=pendingSave!=null;
         }
         void ResetCircuit(int reached=0){route=new CheckpointCircuit(checkpoints.Select(p=>p.position).ToArray(),Mathf.Max(18,checkpointRadius),reached);}
         void Update()
         {
+            if(Input.GetKeyDown(KeyCode.F8))testPanel=!testPanel;
             if(!player || route==null || SaveChoiceOpen || (briefing && briefing.IsOpen) || transitioning || Complete || hornMoments.Playing)return;
             if(!openingShown){openingShown=true;StartCoroutine(OpenCamp());return;}
             bool arrived=route.Sample(player.position);
@@ -47,9 +83,35 @@ namespace JerichoPrototype
         {
             transitioning=true;Days.FinishCircuit();hornMoments.PlayAtFinish(player,cityCenter);
             while(hornMoments.Playing)yield return null;
-            if(Days.Complete){transitioning=false;SaveProgress();yield break;}
+            if(Days.Complete){yield return CollapseFinale();yield break;}
             if(Days.DayFinished){yield return camp.Show(Days.Day,true,player);Days.NextMorning();}
             ResetCircuit();transitioning=false;SaveProgress();
+        }
+        IEnumerator CollapseFinale()
+        {
+            transitioning=true;
+            if(city && !city.Finished)
+            {
+                finaleController=player.GetComponent<JoshuaController>();
+                if(finaleController){finaleControllerEnabled=finaleController.enabled;finaleController.enabled=false;}
+                finaleCamera=FindObjectsOfType<ThirdPersonCamera>().FirstOrDefault(c=>c.target==player && c.isActiveAndEnabled);
+                if(finaleCamera)
+                {
+                    var bounds=new Bounds(cityCenter+Vector3.up*5,new Vector3(70,16,70));
+                    finaleCamera.ShowHornView(bounds,cityCenter);
+                }
+                yield return new WaitForSeconds(1.2f);
+                city.Collapse();while(city && !city.Finished)yield return null;
+                yield return new WaitForSeconds(1);
+                RestoreFinaleControls();
+            }
+            transitioning=false;SaveProgress();
+        }
+        void RestoreFinaleControls()
+        {
+            if(finaleCamera)finaleCamera.EndHornView();
+            if(finaleController)finaleController.enabled=finaleControllerEnabled;
+            finaleCamera=null;finaleController=null;
         }
         static string Path(Transform t)
         {
@@ -74,6 +136,7 @@ namespace JerichoPrototype
             var formation=FindObjectsOfType<ProcessionManager>().FirstOrDefault(p=>p.leader==player);
             var camera=FindObjectsOfType<ThirdPersonCamera>().FirstOrDefault(c=>c.target==player);
             return new MarchSave{day=Days.Day,circuits=Days.Circuits,reached=route.Reached,
+                wallsFallen=city && city.Finished,
                 formationHeading=formation?formation.Heading:player.rotation,
                 cameraYaw=camera?Quaternion.LookRotation(camera.MovementForward).eulerAngles.y:player.eulerAngles.y,
                 poses=Actors().Select(t=>new MarchPose{path=Path(t),position=t.position,rotation=t.rotation}).ToArray()};
@@ -93,7 +156,9 @@ namespace JerichoPrototype
             foreach(var formation in FindObjectsOfType<ProcessionManager>().Where(p=>p.leader==player))formation.RestoreHeading(pendingSave.formationHeading);
             foreach(var camera in FindObjectsOfType<ThirdPersonCamera>().Where(c=>c.target==player))camera.RestoreHeading(pendingSave.cameraYaw);
             camp.SetDayProgress((Days.Circuits+route.Fraction(player.position))/Days.Required);
-            if(briefing)briefing.ResumeSavedMarch();pendingSave=null;saveStatus="Saved march resumed";
+            if(briefing)briefing.ResumeSavedMarch();
+            bool fallen=pendingSave.wallsFallen;pendingSave=null;saveStatus="Saved march resumed";
+            if(Complete){if(fallen && city)city.RestoreCollapsed();else StartCoroutine(CollapseFinale());}
         }
         public void DrawSaveChoice()
         {
@@ -107,9 +172,24 @@ namespace JerichoPrototype
         }
         void OnApplicationPause(bool paused){if(paused)SaveProgress();}
         void OnApplicationQuit(){SaveProgress();}
-        void OnDisable(){StopAllCoroutines();transitioning=false;if(camp)camp.enabled=false;}
+        void OnDisable(){StopAllCoroutines();RestoreFinaleControls();transitioning=false;if(camp)camp.enabled=false;}
         void OnGUI()
         {
+            if(GUI.Button(new Rect(Screen.width-165,12,150,28),"Testing / F8"))testPanel=!testPanel;
+            if(testPanel)
+            {
+                var old=GUI.color;GUI.color=Color.white;GUI.DrawTexture(new Rect(Screen.width-320,45,305,195),Texture2D.whiteTexture);GUI.color=old;
+                using(BlackGameText.Scope())
+                {
+                    GUI.Label(new Rect(Screen.width-305,52,275,45),"Step through the march\nShortcuts turn autosaving OFF.");
+                    GUI.enabled=!transitioning;
+                    if(GUI.Button(new Rect(Screen.width-305,103,275,32),"Next checkpoint"))TestNextCheckpoint();
+                    if(GUI.Button(new Rect(Screen.width-305,140,275,32),"Finish this day → camp"))TestFinishDay(false);
+                    if(GUI.Button(new Rect(Screen.width-305,177,275,32),"Final circuit → walls fall"))TestFinishDay(true);
+                    GUI.enabled=true;
+                    GUI.Label(new Rect(Screen.width-305,212,275,24),transitioning?"Playing sequence…":"Restart Play Mode to leave test mode.");
+                }
+            }
             if(briefing && briefing.IsOpen)return;
             if(SaveChoiceOpen){DrawSaveChoice();return;}
             if(camp && camp.Playing)return;

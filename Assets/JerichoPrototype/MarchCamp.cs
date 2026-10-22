@@ -158,7 +158,7 @@ namespace JerichoPrototype
             int depth=GUI.depth;GUI.depth=-100;
             Color old=GUI.color;GUI.color=new Color(0,0,0,fade);GUI.DrawTexture(new Rect(0,0,Screen.width,Screen.height),Texture2D.whiteTexture);GUI.color=old;
             var style=new GUIStyle(GUI.skin.label){fontSize=26,alignment=TextAnchor.MiddleCenter};style.normal.textColor=Color.black;
-            GUI.color=new Color(.96f,.89f,.7f);GUI.DrawTexture(new Rect(Screen.width*.15f,Screen.height*.82f,Screen.width*.7f,55),Texture2D.whiteTexture);GUI.color=old;
+            GUI.color=Color.white;GUI.DrawTexture(new Rect(Screen.width*.15f,Screen.height*.82f,Screen.width*.7f,55),Texture2D.whiteTexture);GUI.color=old;
             GUI.Label(new Rect(Screen.width*.15f,Screen.height*.82f,Screen.width*.7f,55),caption,style);GUI.depth=depth;
         }
         void OnDisable(){StopAllCoroutines();RestoreControls();RestoreLight();}

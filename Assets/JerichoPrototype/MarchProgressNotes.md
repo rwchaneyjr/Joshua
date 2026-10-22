@@ -9,3 +9,6 @@ Progress saves locally using Unity PlayerPrefs (`Jericho.MarchProgress.v1`) at e
 An interrupted horn/camp transition resumes from the last safe checkpoint, so an unfinished ceremony may replay. This avoids skipping a day if the game closes during the fade.
 
 Verification logs: `Logs/checkpoint-save-test.txt` and `Logs/march-camp-test.txt`. The latter moves the actual player through the six scene checkpoint zones and checks sun advancement and the camp/day-two handoff. Test runs disable real autosaving to preserve existing player progress.
+
+Testing: press F8 or click Testing / F8. Next checkpoint moves the group into the next zone. Finish this day advances to its final circuit. Final circuit jumps to day seven's last checkpoint and runs the horns and city collapse. Shortcuts disable autosaving until Play Mode/game restart. Completed saves retain fallen walls; older completed saves without the wallsFallen field play the missing collapse when continued.
+

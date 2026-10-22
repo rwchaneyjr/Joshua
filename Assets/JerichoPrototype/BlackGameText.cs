@@ -14,6 +14,7 @@ namespace JerichoPrototype
             {
                 blackSkin = UnityEngine.Object.Instantiate(previous);
                 blackSkin.hideFlags = HideFlags.HideAndDontSave;
+                blackSkin.box.normal.background = Texture2D.whiteTexture;
                 foreach (GUIStyle style in blackSkin)
                 {
                     style.normal.textColor = Color.black;

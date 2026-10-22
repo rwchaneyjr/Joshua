@@ -7,6 +7,19 @@ namespace JerichoPrototype
     {
         public Transform[] pieces;
         public bool Collapsed { get; private set; }
+        public bool Finished { get; private set; }
+        public void RestoreCollapsed()
+        {
+            StopAllCoroutines();Collapsed=true;Finished=true;
+            for(int i=0;i<pieces.Length;i++)
+            {
+                Vector3 inward=-new Vector3(positions[i].x,0,positions[i].z).normalized;
+                var target=positions[i]+inward*(1.5f+i%4);target.y=.45f+(i%3)*.3f;
+                pieces[i].localPosition=target;
+                pieces[i].localRotation=Quaternion.Euler(70+i%35,i*37%360,i%2==0?15:-15);
+                foreach(var c in pieces[i].GetComponentsInChildren<Collider>())c.enabled=false;
+            }
+        }
         Vector3[] positions;
         Quaternion[] rotations;
         void Awake()
@@ -27,7 +40,7 @@ namespace JerichoPrototype
         public void ResetWalls()
         {
             if (!Application.isPlaying || positions == null) return;
-            StopAllCoroutines(); Collapsed = false;
+            StopAllCoroutines(); Collapsed = false; Finished=false;
             for (int i = 0; i < pieces.Length; i++)
             {
                 pieces[i].localPosition = positions[i]; pieces[i].localRotation = rotations[i];
@@ -54,6 +67,7 @@ namespace JerichoPrototype
                 }
                 yield return null;
             }
+            Finished=true;
         }
     }
 }
