@@ -94,6 +94,7 @@ namespace JerichoPrototype
             if(city && !city.Finished)
             {
                 BuildFinaleArmy();
+                ClearFinalePath();
                 finaleController=player.GetComponent<JoshuaController>();
                 if(finaleController){finaleControllerEnabled=finaleController.enabled;finaleController.enabled=false;}
                 finaleCamera=FindObjectsOfType<ThirdPersonCamera>().FirstOrDefault(c=>c.target==player && c.isActiveAndEnabled);
@@ -107,6 +108,40 @@ namespace JerichoPrototype
                 RestoreFinaleControls();
             }
             transitioning=false;SaveProgress();
+        }
+
+        void ClearFinalePath()
+        {
+            var towardCity = cityCenter - player.position;
+            towardCity.y = 0;
+            if (towardCity.sqrMagnitude < .01f) towardCity = player.forward;
+            towardCity.Normalize();
+            var flank = Vector3.Cross(Vector3.up, towardCity).normalized;
+
+            var guard = player.Find("Joshua Stone Guard");
+            if (!guard)
+            {
+                guard = new GameObject("Joshua Stone Guard").transform;
+                guard.SetParent(player, false);
+                var collider = guard.gameObject.AddComponent<CapsuleCollider>();
+                collider.center = new Vector3(0, 1.1f, 0);
+                collider.radius = 1.2f;
+                collider.height = 3.1f;
+            }
+
+            // Move priests and existing procession members clear of the rubble,
+            // leaving Joshua exactly where the finale camera expects him.
+            int index = 0;
+            foreach (var follower in FindObjectsOfType<ProcessionFollower>()
+                .Where(f => f && f.gameObject.scene == gameObject.scene && !f.name.StartsWith("Finale Attack Soldier")))
+            {
+                var motor = follower.GetComponent<CharacterController>();
+                if (motor) motor.enabled = false;
+                follower.transform.position = player.position + flank * (-12f - (index % 5) * 1.5f) - towardCity * (index / 5 * 2f + 3f);
+                follower.transform.rotation = Quaternion.LookRotation(towardCity, Vector3.up);
+                follower.enabled = false;
+                index++;
+            }
         }
 
         void BuildFinaleArmy()
