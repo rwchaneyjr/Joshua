@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/TrumpetSearch.unity
+    guid: dd2d0cd875cde8c46bbd68a3da060ceb
+  - enabled: 1
     path: Assets/Scenes/JerichoPrototype.unity
     guid: c7728071f804e6f44a623fdb0dcc3efc
   m_configObjects: {}

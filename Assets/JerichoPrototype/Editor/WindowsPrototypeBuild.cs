@@ -9,6 +9,7 @@ namespace JerichoPrototype.Editor
     public static class WindowsPrototypeBuild
     {
         public const string Scene = "Assets/Scenes/JerichoPrototype.unity";
+        public const string SearchScene = "Assets/TrumpetSearch.unity";
         [MenuItem("Tools/Jericho Prototype/Build Windows Desktop")]
         public static void Build()
         {
@@ -16,11 +17,13 @@ namespace JerichoPrototype.Editor
                 throw new InvalidOperationException("Exit Play Mode before building.");
             if (!AssetDatabase.LoadAssetAtPath<SceneAsset>(Scene))
                 throw new FileNotFoundException("Existing prototype scene is required. No assets will be generated.", Scene);
-            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(Scene, true) };
+            if (!AssetDatabase.LoadAssetAtPath<SceneAsset>(SearchScene))
+                throw new FileNotFoundException("Trumpet search scene is required.", SearchScene);
+            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(SearchScene, true), new EditorBuildSettingsScene(Scene, true) };
             Directory.CreateDirectory("Builds/Windows");
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
-                scenes = new[] { Scene },
+                scenes = new[] { SearchScene, Scene },
                 locationPathName = "Builds/Windows/Joshua.exe",
                 target = BuildTarget.StandaloneWindows64,
                 options = BuildOptions.Development

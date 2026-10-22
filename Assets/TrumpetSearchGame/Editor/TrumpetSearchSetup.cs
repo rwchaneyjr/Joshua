@@ -58,7 +58,7 @@ namespace JerichoPrototype.Editor
             var light=scene.GetRootGameObjects().SelectMany(g=>g.GetComponentsInChildren<Light>()).FirstOrDefault();if(light){light.intensity=1.3f;light.transform.rotation=Quaternion.Euler(55,-30,0);EditorUtility.SetDirty(light);}
             EditorSceneManager.MarkSceneDirty(scene);EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();
             // Test collection logic on a disposable clone, leaving the saved scene untouched.
-            var copy=UnityEngine.Object.Instantiate(root);try{var test=copy.GetComponent<TrumpetSearchGame>();if(test.Collect(test.trumpets[0]))throw new Exception("Collected while instructions open");test.BeginSearch();foreach(var horn in test.trumpets){if(!test.Collect(horn))throw new Exception("Collection failed");if(test.Collect(horn))throw new Exception("Duplicate counted");}if(!test.Complete||test.Found!=7)throw new Exception("Completion failed");test.RestartSearch();if(test.Found!=0||test.Complete||test.trumpets.Any(h=>h.Collected||!h.gameObject.activeSelf))throw new Exception("Restart failed");}finally{UnityEngine.Object.DestroyImmediate(copy);}
+            var copy=UnityEngine.Object.Instantiate(root);try{TrumpetClueVerification.Verify(copy.GetComponent<TrumpetSearchGame>());}finally{UnityEngine.Object.DestroyImmediate(copy);}
             Directory.CreateDirectory("Logs");File.WriteAllText("Logs/trumpet-search-setup.txt","PASS: seven collectible horns; instructions gate, duplicate prevention, completion and restart verified. Scene saved at Assets/TrumpetSearch.unity.");
             Selection.activeGameObject=root;
         }
@@ -66,3 +66,4 @@ namespace JerichoPrototype.Editor
         static GameObject Box(Transform parent,string name,Vector3 position,Vector3 scale,Material material){var go=GameObject.CreatePrimitive(PrimitiveType.Cube);go.name=name;go.transform.SetParent(parent,false);go.transform.localPosition=position;go.transform.localScale=scale;go.GetComponent<Renderer>().sharedMaterial=material;return go;}
     }
 }
+
