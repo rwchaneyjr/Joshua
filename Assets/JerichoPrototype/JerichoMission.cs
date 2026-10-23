@@ -27,7 +27,7 @@ namespace JerichoPrototype
         ThirdPersonCamera finaleCamera;
         JoshuaController finaleController;
         bool finaleControllerEnabled;
-        bool testPanel;
+        bool testPanel = true;
         readonly List<GameObject> finaleArmy = new List<GameObject>();
         public bool Testing { get; private set; }
         public void EnableTesting()
@@ -243,6 +243,15 @@ namespace JerichoPrototype
         void OnDisable(){StopAllCoroutines();RestoreFinaleControls();transitioning=false;if(camp)camp.enabled=false;}
         void OnGUI()
         {
+            // Other scene overlays can leave IMGUI disabled or transparent.
+            // Reset the shared state before drawing this mission HUD.
+            GUI.enabled = true;
+            GUI.color = Color.black;
+            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.E)
+            {
+                testPanel = !testPanel;
+                Event.current.Use();
+            }
             if(GUI.Button(new Rect(Screen.width-165,12,150,28),"Step ahead / E"))testPanel=!testPanel;
             if(testPanel)
             {
