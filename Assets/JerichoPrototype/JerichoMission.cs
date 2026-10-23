@@ -246,26 +246,8 @@ namespace JerichoPrototype
         void OnDisable(){StopAllCoroutines();RestoreFinaleControls();transitioning=false;if(camp)camp.enabled=false;}
         void OnGUI()
         {
-            // Keep the progress HUD independent of Canvas/font setup.
-            GUI.matrix = Matrix4x4.identity;
-            GUI.enabled = true;
-            GUI.color = Color.white;
-            GUI.DrawTexture(new Rect(12, 12, 340, 118), Texture2D.whiteTexture);
-            GUI.color = Color.black;
-            GUI.Label(new Rect(24, 22, 315, 24), "MISSION: JERICHO - DAY " + Days.Day + " / 7");
-            GUI.Label(new Rect(24, 48, 315, 24), "CIRCUITS: " + Days.Circuits + " / " + Days.Required);
-            GUI.Label(new Rect(24, 74, 315, 24), "CHECKPOINTS: " + CompletedCheckpoints + " / 6");
-            GUI.Label(new Rect(24, 100, 315, 24), "Press E: show/hide step menu   F7: walls fall");
-
-            // Other scene overlays can leave IMGUI disabled or transparent.
-            // Reset the shared state before drawing this mission HUD.
             GUI.enabled = true;
             GUI.color = Color.black;
-            if (Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.E)
-            {
-                testPanel = !testPanel;
-                Event.current.Use();
-            }
             if(GUI.Button(new Rect(Screen.width-165,12,150,28),"Step ahead / E"))testPanel=!testPanel;
             if(testPanel)
             {
@@ -281,16 +263,15 @@ namespace JerichoPrototype
                     GUI.Label(new Rect(Screen.width-305,212,275,24),transitioning?"Playing sequence…":"Restart Play Mode to leave test mode.");
                 }
             }
-            if(briefing && briefing.IsOpen)return;
-            if(SaveChoiceOpen){DrawSaveChoice();return;}
-            if(camp && camp.Playing)return;
+            if((briefing && briefing.IsOpen) || (camp && camp.Playing))return;
             using(BlackGameText.Scope())
             {
-                GUI.Label(new Rect(30,15,550,25),"MISSION: JERICHO — DAY "+Days.Day+" / 7");
+                GUI.Label(new Rect(30,15,500,25),"MISSION: JERICHO — DAY "+Days.Day+" / 7");
                 float hour=camp?camp.Hour:9;int hours=Mathf.FloorToInt(hour);int minutes=Mathf.FloorToInt((hour-hours)*60);
                 string time=(hours>12?hours-12:hours)+":"+minutes.ToString("00")+(hours>=12?" PM":" AM");
-                GUI.Label(new Rect(30,43,650,100),"Circuits completed today: "+Days.Circuits+" / "+Days.Required+"\n"+time+" — Joshua 6\n"+(Complete?"SEVEN-DAY MARCH COMPLETE":"Checkpoint: "+CompletedCheckpoints+" / 6 — Next: "+Mathf.Min(6,CompletedCheckpoints+1))+"\n"+saveStatus);
-                if(ShowInstructions)GUI.Label(new Rect(30,150,650,90),"Follow checkpoints 1–6 in order. Checkpoint 6 ends each circuit.\nWASD move | Shift run | Right click: mouse look\nLeft click: full procession view | Esc: free cursor\nProgress saves at checkpoints and each new morning.");
+                float circuitPercent = route == null || !player ? 0f : route.Fraction(player.position) * 100f;
+                GUI.Label(new Rect(30,43,500,90),"Circuits completed today: "+Days.Circuits+" / "+Days.Required+"\n"+time+" — Joshua 6\n"+(Complete?"SEVEN-DAY MARCH COMPLETE":"Current circuit: "+Mathf.FloorToInt(circuitPercent)+"%"));
+                if(ShowInstructions)GUI.Label(new Rect(30,135,650,90),"March once each day for six days; seven circuits on day seven.\nWASD move | Shift run | Right click: mouse look\nLeft click: full procession view | Esc: free cursor\nFinish the day's march to return to camp at sunset.");
             }
         }
     }
