@@ -61,6 +61,11 @@ namespace JerichoPrototype
             if (!Complete) return;
             SceneManager.LoadScene("Assets/Scenes/JerichoPrototype.unity", LoadSceneMode.Single);
         }
+
+        public void SkipToMarch()
+        {
+            SceneManager.LoadScene("Assets/Scenes/JerichoPrototype.unity", LoadSceneMode.Single);
+        }
         public bool Collect(TrumpetCollectible trumpet)
         {
             if (InstructionsOpen || Complete || !trumpet || !trumpet.Revealed || trumpet.owner != this || trumpet.Collected ||
@@ -125,7 +130,11 @@ namespace JerichoPrototype
                         if (GUI.Button(new Rect(255,410,260,35),"Continue to the march")) ContinueToMarch();
                         if (GUI.Button(new Rect(535,410,210,35),"Search again")) RestartSearch();
                     }
-                    else if (GUI.Button(new Rect(385,410,230,35),"Begin search")) BeginSearch();
+                    else
+                    {
+                        if (GUI.Button(new Rect(325,410,230,35),"Begin search")) BeginSearch();
+                        if (GUI.Button(new Rect(565,410,180,35),"Skip horn search")) SkipToMarch();
+                    }
                 }
             }
             GUI.matrix = original;

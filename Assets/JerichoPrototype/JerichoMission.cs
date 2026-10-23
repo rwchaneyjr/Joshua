@@ -235,7 +235,7 @@ namespace JerichoPrototype
         {
             using(BlackGameText.Scope())
             {
-                var rect=new Rect(Screen.width/2-240,Screen.height/2-105,480,210);GUI.Box(rect,"Continue your march?");
+                var rect=new Rect(Screen.width/2-405,Screen.height/2-75,480,210);GUI.Box(rect,"Continue your march?");
                 GUI.Label(new Rect(rect.x+25,rect.y+40,430,65),"Saved day: "+pendingSave.day+" / 7\nCircuits completed: "+pendingSave.circuits+" | Checkpoints passed: "+pendingSave.reached+" / 6");
                 if(GUI.Button(new Rect(rect.x+25,rect.y+125,200,45),"Continue"))ChooseSavedGame(true);
                 if(GUI.Button(new Rect(rect.x+255,rect.y+125,200,45),"Start over"))ChooseSavedGame(false);
