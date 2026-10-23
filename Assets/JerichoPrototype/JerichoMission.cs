@@ -71,7 +71,8 @@ namespace JerichoPrototype
         void ResetCircuit(int reached=0){route=new CheckpointCircuit(checkpoints.Select(p=>p.position).ToArray(),Mathf.Max(18,checkpointRadius),reached);}
         void Update()
         {
-            if(Input.GetKeyDown(KeyCode.F8))testPanel=!testPanel;
+            if(Input.GetKeyDown(KeyCode.E))testPanel=!testPanel;
+            if(Input.GetKeyDown(KeyCode.F7))TestFinishDay(true);
             if(!player || route==null || SaveChoiceOpen || (briefing && briefing.IsOpen) || transitioning || Complete || hornMoments.Playing)return;
             if(!openingShown){openingShown=true;StartCoroutine(OpenCamp());return;}
             bool arrived=route.Sample(player.position);
@@ -242,13 +243,13 @@ namespace JerichoPrototype
         void OnDisable(){StopAllCoroutines();RestoreFinaleControls();transitioning=false;if(camp)camp.enabled=false;}
         void OnGUI()
         {
-            if(GUI.Button(new Rect(Screen.width-165,12,150,28),"Testing / F8"))testPanel=!testPanel;
+            if(GUI.Button(new Rect(Screen.width-165,12,150,28),"Step ahead / E"))testPanel=!testPanel;
             if(testPanel)
             {
                 var old=GUI.color;GUI.color=Color.white;GUI.DrawTexture(new Rect(Screen.width-320,45,305,195),Texture2D.whiteTexture);GUI.color=old;
                 using(BlackGameText.Scope())
                 {
-                    GUI.Label(new Rect(Screen.width-305,52,275,45),"Step through the march\nShortcuts turn autosaving OFF.");
+                    GUI.Label(new Rect(Screen.width-305,52,275,45),"Step through the march\nPress E to show or hide this menu.");
                     GUI.enabled=!transitioning;
                     if(GUI.Button(new Rect(Screen.width-305,103,275,32),"Next checkpoint"))TestNextCheckpoint();
                     if(GUI.Button(new Rect(Screen.width-305,140,275,32),"Finish this day → camp"))TestFinishDay(false);
