@@ -10,6 +10,9 @@ namespace JerichoPrototype
         public Transform[] checkpoints;
         public float checkpointRadius=4;
         public int CompletedCheckpoints => route==null?0:route.Reached;
+        public int CurrentDay => Days.Day;
+        public int CurrentCircuit => Days.Circuits;
+        public int RequiredCircuits => Days.Required;
         public MarchDays Days { get; }=new MarchDays();
         public bool Complete=>Days.Complete;
         public bool ShowInstructions=>Days.Day==1 && CompletedCheckpoints==0;
@@ -243,6 +246,17 @@ namespace JerichoPrototype
         void OnDisable(){StopAllCoroutines();RestoreFinaleControls();transitioning=false;if(camp)camp.enabled=false;}
         void OnGUI()
         {
+            // Keep the progress HUD independent of Canvas/font setup.
+            GUI.matrix = Matrix4x4.identity;
+            GUI.enabled = true;
+            GUI.color = Color.white;
+            GUI.DrawTexture(new Rect(12, 12, 340, 118), Texture2D.whiteTexture);
+            GUI.color = Color.black;
+            GUI.Label(new Rect(24, 22, 315, 24), "MISSION: JERICHO - DAY " + Days.Day + " / 7");
+            GUI.Label(new Rect(24, 48, 315, 24), "CIRCUITS: " + Days.Circuits + " / " + Days.Required);
+            GUI.Label(new Rect(24, 74, 315, 24), "CHECKPOINTS: " + CompletedCheckpoints + " / 6");
+            GUI.Label(new Rect(24, 100, 315, 24), "Press E: show/hide step menu   F7: walls fall");
+
             // Other scene overlays can leave IMGUI disabled or transparent.
             // Reset the shared state before drawing this mission HUD.
             GUI.enabled = true;
